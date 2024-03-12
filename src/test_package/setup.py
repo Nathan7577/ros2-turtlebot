@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'keyboard_teleop = test_package.keyboard_teleop:main'
+            'keyboard_teleop = test_package.keyboard_teleop:main',
+            'wall_follow = test_package.wall_follow:main',   
         ],
     },
 )
