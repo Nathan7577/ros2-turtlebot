@@ -1,13 +1,11 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from rclpy.action import ActionClient
 import numpy as np
-import time
 
+from example_interfaces.srv import Trigger
 from geometry_msgs.msg import Twist
 from irobot_create_msgs.msg import IrIntensityVector
-from irobot_create_msgs.action import RotateAngle
 
 namespace = 'robot_0'  
 
@@ -23,14 +21,15 @@ class wall_follow_node(Node):
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=10
         )
+
         #create publisher 
         self.publisher_ = self.create_publisher(Twist, 'robot_0/cmd_vel', 1)
 
         #create subscriber
         self.ir_subscription = self.create_subscription(IrIntensityVector, 'robot_0/ir_intensity', self.ir_callback, qos_profile=custom_qos)
         
-        #create action client
-        # self.turn_client = ActionClient(self, RotateAngle, 'robot_0/rotate_angle')
+        #create service client
+        # self.srv = self.create_service(Trigger, 'wall_contacted', self.wall_contacted_callback)
 
 
     def ir_callback(self, msg_in):
@@ -63,54 +62,57 @@ class wall_follow_node(Node):
         # set sensor thresholds and stright zone threshold
         front_threshold = np.uint16(700)
         left_threshold = np.uint16(700)
-        straight_zone_bound = np.uint16(100)
-        right_threshold = np.uint16(400)
         left_des = np.uint16(50)
         stop_rotate = np.uint16(100)
 
 
         
         print('')
-        print('left          ' + str(left))
-        print('front         ' + str(front))
+        # print('left          ' + str(left))
+        # print('front         ' + str(front))
 
         if front < stop_rotate:
-            print("emergency right turn")
+            # print("emergency right turn")
             msg_out.linear.x = 0.0
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
             msg_out.angular.z = -1.0
+            # self.wall_contacted_callback()
 
         elif front < front_threshold and left < left_threshold: # right turn
-            print("turning right")
+            # print("turning right")
             msg_out.linear.x = 0.0
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
             msg_out.angular.z = -1.0
+            # self.wall_contacted_callback()
 
         elif left == 1000: # left turn
-            print('turning left')
+            # print('turning left')
             msg_out.linear.x = 0.1
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
             msg_out.angular.z = 0.35
+            # self.wall_contacted_callback()
 
         elif left >= left_des:
-            print('DRIVE STRAIGHT, WALL')
+            # print('DRIVE STRAIGHT, WALL')
             msg_out.linear.x = 0.1
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
             msg_out.angular.z = -0.6
+            # self.wall_contacted_callback()
+
         else:
-            print('DRIVE STRAIGHT, NO WALL')
+            # print('DRIVE STRAIGHT, NO WALL')
             msg_out.linear.x = 0.1
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
@@ -120,6 +122,11 @@ class wall_follow_node(Node):
 
         #publish message
         self.publisher_.publish(msg_out)
+
+    # def wall_contacted_callback(self): 
+    #     print('WALL CONTACT SERVICE CALLED')
+    #     rclpy.spin_until_future_complete(self)
+    #     return
 
 def main(args=None):
     rclpy.init(args=args)
