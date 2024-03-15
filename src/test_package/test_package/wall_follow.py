@@ -48,6 +48,7 @@ class wall_follow_node(Node):
         left = np.average(readings[:2])
         front = np.average(readings[2:5])
         right = np.average(readings[-2:])
+        left_front = np.average(readings[:5])
         
         # sensors set 0 as the infinity value this changes them so the logic works
         if left < 6:
@@ -60,10 +61,12 @@ class wall_follow_node(Node):
             right = 1000
         
         # set sensor thresholds and stright zone threshold
-        front_threshold = np.uint16(200)
-        left_threshold = np.uint16(50)
+        front_threshold = np.uint16(700)
+        left_threshold = np.uint16(700)
         straight_zone_bound = np.uint16(100)
+        right_threshold = np.uint16(400)
         left_des = np.uint16(50)
+        stop_rotate = np.uint16(100)
 
 
         
@@ -71,7 +74,16 @@ class wall_follow_node(Node):
         print('left          ' + str(left))
         print('front         ' + str(front))
 
-        if front < front_threshold: # right turn
+        if front < stop_rotate:
+            print("emergency right turn")
+            msg_out.linear.x = 0.0
+            msg_out.linear.y = 0.0
+            msg_out.linear.z = 0.0
+            msg_out.angular.x = 0.0
+            msg_out.angular.y = 0.0
+            msg_out.angular.z = -1.0
+
+        elif front < front_threshold and left < left_threshold: # right turn
             print("turning right")
             msg_out.linear.x = 0.0
             msg_out.linear.y = 0.0
@@ -87,27 +99,26 @@ class wall_follow_node(Node):
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
-            msg_out.angular.z = 0.4
+            msg_out.angular.z = 0.35
 
         elif left >= left_des:
             print('DRIVE STRAIGHT, WALL')
-            msg_out.linear.x = 0.2
+            msg_out.linear.x = 0.1
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
-            msg_out.angular.z = -0.3
+            msg_out.angular.z = -0.6
         else:
             print('DRIVE STRAIGHT, NO WALL')
-            msg_out.linear.x = 0.2
+            msg_out.linear.x = 0.1
             msg_out.linear.y = 0.0
             msg_out.linear.z = 0.0
             msg_out.angular.x = 0.0
             msg_out.angular.y = 0.0
-            msg_out.angular.z = 0.3
+            msg_out.angular.z = 0.6
 
-        # publish message
-        # time.sleep(.5)
+        #publish message
         self.publisher_.publish(msg_out)
 
 def main(args=None):
